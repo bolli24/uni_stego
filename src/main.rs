@@ -77,7 +77,7 @@ fn get_char(byte: u8) -> char {
     let code_point = if byte < 16 {
         VARIATION_SELECTOR_START + byte as u32
     } else {
-        VARIATION_SELECTOR_SUPPLEMENT_START + byte as u32
+        VARIATION_SELECTOR_SUPPLEMENT_START + byte as u32 - 16
     };
     unsafe { char::from_u32_unchecked(code_point) }
 }
@@ -89,7 +89,7 @@ fn get_byte(c: char) -> Option<u8> {
     } else if (VARIATION_SELECTOR_SUPPLEMENT_START..=VARIATION_SELECTOR_SUPPLEMENT_END)
         .contains(&code_point)
     {
-        Some((code_point - VARIATION_SELECTOR_SUPPLEMENT_START) as u8)
+        Some((code_point - VARIATION_SELECTOR_SUPPLEMENT_START + 16) as u8)
     } else {
         None
     }
