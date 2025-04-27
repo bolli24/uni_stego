@@ -1,60 +1,44 @@
-use std::{env, process::exit};
+use clap::{Parser, Subcommand};
+use clap_stdin::MaybeStdin;
 
-enum Mode {
-    Encode,
-    Decode,
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+#[command(
+    after_help = "Examples:\n  emoji_stego encode -m \"Hello world\"\n  emoji_stego encode -m \"Secret message\" -e 🔒\n  emoji_stego decode -m \"👍...\""
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Encode a message into an emoji
+    Encode {
+        /// Message to encode
+        #[arg(short, long)]
+        message: MaybeStdin<String>,
+
+        /// Emoji to encode the message into
+        #[arg(short, long, default_value = "👍")]
+        emoji: char,
+    },
+    /// Decode a message from an emoji
+    Decode {
+        /// Message to decode
+        #[arg(short, long)]
+        message: MaybeStdin<String>,
+    },
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let cli = Cli::parse();
 
-    if args.len() <= 1 {
-        usage(Some("ERROR: no arguments given."));
-    }
-
-    println!("{:?}", args);
-
-    let mode = match args.get(1).map(|s| s.as_str()) {
-        Some("-e") | Some("--encode") => Mode::Encode,
-        Some("-d") | Some("--decode") => Mode::Decode,
-        Some("-h") | Some("--help") => {
-            usage(None);
+    match &cli.command {
+        Commands::Encode { message, emoji } => {
+            println!("{}", encode(message, *emoji));
         }
-        Some(_) => {
-            usage("ERROR: Invalid mode must be one of: -e/--encode, -d/--deocde");
-        }
-        None => unreachable!(),
-    };
-
-    match mode {
-        Mode::Encode => {
-            let Some(message) = args.get(2) else {
-                usage("ERROR: Must provide message.");
-            };
-
-            /* let message = args.get(2).cloned().unwrap_or_else(|| {
-                let mut buffer = String::new();
-                std::io::stdin().read_line(&mut buffer).unwrap();
-                buffer
-            }); */
-
-            let emoji = match args.get(3) {
-                Some(string) => {
-                    if string.len() != 1 {
-                        usage("ERROR: Emoji must be exactly one character.");
-                    }
-                    string.chars().next().expect("String should be length one.")
-                }
-                None => '👍',
-            };
-
-            println!("{}", encode(message, emoji));
-        }
-        Mode::Decode => {
-            let Some(message) = args.get(2) else {
-                usage("ERROR: Must provide message.");
-            };
-
+        Commands::Decode { message } => {
             println!("{}", decode(message));
         }
     }
@@ -109,19 +93,4 @@ fn get_byte(c: char) -> Option<u8> {
     } else {
         None
     }
-}
-
-fn usage<'a>(message: impl Into<Option<&'a str>>) -> ! {
-    let message = message.into();
-    if let Some(message) = message {
-        println!("{message}");
-    }
-    println!("USAGE: emoji_stego [mode] [<message>] [<emoji>]");
-    println!("\tmode:");
-    println!("\t -e, --encode \t Encode a message into an emoji");
-    println!("\t -d, --decode \t Decode a message from an emoji");
-    println!("\t emoji \t Emoji to encode the message into. Optional when encoding (default: 👍)");
-    println!("\t message \t Message to encode into an emoji.");
-
-    exit(if message.is_some() { 1 } else { 0 });
 }
