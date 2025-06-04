@@ -7,7 +7,7 @@ use phf::{phf_map, phf_set};
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 #[command(
-    after_help = "Examples:\n  uni_stego -m emoji encode -t \"Hello world\"\n  uni_stego -m emoji encode -t \"Secret message\" -e 🔒\n  uni_stego -m emoji decode -t \"👍...\""
+    after_help = "Examples:\n  uni_stego -m emoji encode -t \"Hello world\"\n  uni_stego -m emoji encode -t \"Secret message\" -c 🔒\n  uni_stego -m emoji decode -t \"👍...\""
 )]
 struct Cli {
     #[arg(value_enum, short, long)]
